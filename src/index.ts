@@ -4,33 +4,27 @@ dotenv.config();
 import express from 'express';
 import bodyParser from "body-parser";
 import mongoose from 'mongoose';
-import Usermodel from "./models/UserRegitration";
 import UserResponse from "./dtos/UserResponse";
 import * as process from "process";
 import ProductModel from "./models/ProductSave";
-import jwt, { Secret } from 'jsonwebtoken'
-import { error } from 'console';
-import e from 'express';
-
+import UserRoute from './routes/UserRoutes'
+import ProductRoute from './routes/ProductRoutes'
+const app  = express();
 const cors = require('cors');
 
-const app = express();
+
 const corsOptions = {
-    origin: 'http://localhost:3000', // Replace with the actual URL of your React app
+    origin              : 'http://localhost:3000',   // Replace with the actual URL of your React app
     optionsSuccessStatus: 200,
 };
 
 app.use(cors(corsOptions));
 app.use(bodyParser.json());
 
-const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
-const { Readable } = require('stream');
+
 const multer = require('multer');
 
 const storage = multer.memoryStorage();
-const upload = multer({ storage: storage });
-
-
 
 mongoose.connect(process.env.Mongo_DB as string)
 
@@ -46,18 +40,22 @@ connection.on('open',()=>{
 })
 
 
-// Assuming your images are stored in a directory named 'uploads'
-app.use('/products/images', express.static('uploads'));
+  /** Product handler before Route
+ * 
+  // // Assuming your images are stored in a directory named 'uploads'
+  // app.use('/products/images', express.static('uploads'));
+  // const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
+  // const { Readable } = require('stream');
+  // const upload = multer({ storage: storage });
 
-
-const s3Client = new S3Client({
-    region: process.env.AWS_REGION,
+ const s3Client = new S3Client({
+    region     : process.env.AWS_REGION,
     credentials: {
-        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+        accessKeyId    : process.env.AWS_ACCESS_KEY_ID,
         secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
     }
 });
-//@ts-ignore
+  //@ts-ignore
 const fileFilter = (req, file, cb) => {
     if (file.mimetype === 'image/jpeg' || file.mimetype === 'image/png') {
         cb(null, true);
@@ -66,18 +64,16 @@ const fileFilter = (req, file, cb) => {
     }
 };
 
-
-
-app.post('/upload', upload.single('file'), async (req, res) => {
+app.post('/product', upload.single('file'), async (req, res) => {
     const file = req.file;
 
     const params = {
         Bucket: process.env.AWS_S3_BUCKET_NAME,
-        //@ts-ignore
+          //@ts-ignore
         Key: file.originalname,
-        //@ts-ignore
+          //@ts-ignore
         Body: req.file.buffer,
-        //@ts-ignore
+          //@ts-ignore
         ContentType: file.mimetype
     };
 
@@ -86,14 +82,14 @@ app.post('/upload', upload.single('file'), async (req, res) => {
         const productModel = new ProductModel({
             title: req.body.title,
             price: req.body.price,
-            file: {
-                //@ts-ignore
+            file : {
+                  //@ts-ignore
                 filename: file.originalname,
-                //@ts-ignore
+                  //@ts-ignore
                 contentType: file.mimetype,
-                s3Key: params.Key, // Save the S3 object key
+                s3Key      : params.Key,      // Save the S3 object key
             },
-            type:req.body.type
+            type: req.body.type
         });
 
         const product = await productModel.save();
@@ -105,12 +101,14 @@ app.post('/upload', upload.single('file'), async (req, res) => {
     }
 });
 
+
+
 app.get('/products/all',cors(), async (req:express.Request,res:express.Response)=>{
 
     console.log();
 
     try {
-        const query:any = req.query;
+        const query:any   = req.query;
         const size:number = query.size;
         const page:number = query.page;
 
@@ -133,7 +131,6 @@ app.get('/products/all',cors(), async (req:express.Request,res:express.Response)
 
 });
 
-
 app.get('/products/filterbyId',cors(), async (req:express.Request,res:express.Response)=>{
 
     console.log();
@@ -141,7 +138,7 @@ app.get('/products/filterbyId',cors(), async (req:express.Request,res:express.Re
     try {
         const query:any = req.query;
 
-        const req_id= query.id;
+        const req_id = query.id;
 
         console.log(req_id);
         
@@ -158,22 +155,24 @@ app.get('/products/filterbyId',cors(), async (req:express.Request,res:express.Re
    }
 
 });
-
-
-app.post('/user', async (req:express.Request,res:express.Response)=>{
+ */
+ 
+  /** User part before routes & controller
+ * 
+ *  // app.post('/user', async (req:express.Request,res:express.Response)=>{
 
     try {
         const usermodel = new Usermodel({
 
-            userName:req.body.userName,
-            email:req.body.email,
-            contactNumber:req.body.contactNumber,
-            password:req.body.password
+            userName     : req.body.userName,
+            email        : req.body.email,
+            contactNumber: req.body.contactNumber,
+            password     : req.body.password
 
         });
 
-        let  newVar = await usermodel.save();
-        newVar.password="";
+        let newVar          = await usermodel.save();
+            newVar.password = "";
 
         res.status(200).send('User Created successfully');
     }catch (e){
@@ -186,14 +185,14 @@ app.post('/user/verify', async (req:express.Request, res:express.Response)=>{
     const body = req.body;
 
 
-    const findOne =await Usermodel.findOne({email: body.email});
+    const findOne = await Usermodel.findOne({email: body.email});
 
 
     if (findOne){
-//@ts-ignore
+  //@ts-ignore
         if(findOne.password === body.password){
 
-            findOne.password="";
+            findOne.password = "";
 
             jwt.sign({findOne}, process.env.SECRET as Secret,(error:any,token:any)=>{
 
@@ -205,8 +204,8 @@ app.post('/user/verify', async (req:express.Request, res:express.Response)=>{
 
                     let r_body={
 
-                        findOne:findOne,
-                        accessToken:token
+                        findOne    : findOne,
+                        accessToken: token
 
                     }
 
@@ -233,7 +232,7 @@ app.post('/user/verify', async (req:express.Request, res:express.Response)=>{
 app.get('/user/all', async (req:express.Request,res:express.Response)=>{
 
     try {
-        const find =await Usermodel.find();
+        const find = await Usermodel.find();
         res.status(200).send(new UserResponse(200,'User Data',find));
 
     }catch (e) {
@@ -241,6 +240,15 @@ app.get('/user/all', async (req:express.Request,res:express.Response)=>{
     }
 
 });
+
+
+ */
+
+
+app.use('/user', UserRoute)
+
+app.use('/products', ProductRoute)
+
 
 app.listen(5050,()=>{
 
