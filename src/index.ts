@@ -8,6 +8,9 @@ import Usermodel from "./models/UserRegitration";
 import UserResponse from "./dtos/UserResponse";
 import * as process from "process";
 import ProductModel from "./models/ProductSave";
+import jwt, { Secret } from 'jsonwebtoken'
+import { error } from 'console';
+import e from 'express';
 
 const cors = require('cors');
 
@@ -63,6 +66,8 @@ const fileFilter = (req, file, cb) => {
     }
 };
 
+
+
 app.post('/upload', upload.single('file'), async (req, res) => {
     const file = req.file;
 
@@ -117,6 +122,8 @@ app.get('/products/all',cors(), async (req:express.Request,res:express.Response)
 
         const query1 = await ProductModel.countDocuments();
         const number = Math.ceil(query1/size);
+        console.log(query1);
+        
         console.log(number);
 
         res.status(200).send(new UserResponse(200,'User Data',product));
@@ -125,6 +132,33 @@ app.get('/products/all',cors(), async (req:express.Request,res:express.Response)
    }
 
 });
+
+
+app.get('/products/filterbyId',cors(), async (req:express.Request,res:express.Response)=>{
+
+    console.log();
+
+    try {
+        const query:any = req.query;
+
+        const req_id= query.id;
+
+        console.log(req_id);
+        
+
+        const product = await ProductModel.find({_id: Object(req_id)});
+
+      
+
+        res.status(200).send(new UserResponse(200,'Product Details',product));
+   }catch (e) {
+
+    res.status(200).send(new UserResponse(200,'Product Details not to be found',e));
+
+   }
+
+});
+
 
 app.post('/user', async (req:express.Request,res:express.Response)=>{
 
@@ -158,8 +192,33 @@ app.post('/user/verify', async (req:express.Request, res:express.Response)=>{
     if (findOne){
 //@ts-ignore
         if(findOne.password === body.password){
-res.status(200).send(
-            new UserResponse(200,"Access compleat",findOne));
+
+            findOne.password="";
+
+            jwt.sign({findOne}, process.env.SECRET as Secret,(error:any,token:any)=>{
+
+                if(error){
+
+                    res.status(100).send(
+                        new UserResponse(100,"Somthing Wen Wrong"));
+                }else{
+
+                    let r_body={
+
+                        findOne:findOne,
+                        accessToken:token
+
+                    }
+
+
+                    res.status(200).send(
+                        new UserResponse(200,"Access compleat",r_body));
+                }
+
+            })
+
+
+
         }else {
             res.status(401).send(
             new UserResponse(401,"User Unknown",null));

@@ -5,7 +5,7 @@ export default class UserResponse {
   private _data?:any
 
 
-    constructor(status: number, message: string, body: any) {
+    constructor(status: number, message: string, body?: any) {
         this._status = status;
         this._message = message;
         this._data= body;
