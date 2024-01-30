@@ -2,7 +2,8 @@ import jwt, { Secret } from 'jsonwebtoken'
 import UserResponse from "../dtos/UserResponse";
 import Usermodel from "../models/UserRegitration";
 import express from "express";
-
+import * as process from 'process';
+const app = express();
 export const getAllUsers =async (req:express.Request,res:express.Response)=>{
 
     try {
@@ -35,7 +36,6 @@ export const userRegister =async (req:express.Request,res:express.Response)=>{
         console.log("Error");
     }
 }
-
 
 export const userVreify =async (req:express.Request, res:express.Response)=>{
 
@@ -84,4 +84,40 @@ export const userVreify =async (req:express.Request, res:express.Response)=>{
         res.status(404).send(
             new UserResponse(401,"User is not registered",null));
     }
+}
+
+// const express = require('express');
+    const nodemailer = require('nodemailer');
+    const bodyParser = require('body-parser');
+    app.use(bodyParser.json());
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  port:465,
+  secure:true,
+  auth: {
+    user: 'sankalpaishara4@gmail.com',
+    pass: process.env.PASSWORD,
+  },
+});
+
+
+export const userEmail=(req:express.Request, res:express.Response) => {
+    const { recipient, subject, text } = req.body;
+  
+    const mailOptions = {
+      from: 'sankalpaishara4@gmail.com',
+      to: 'cocjoker805@gmail.com',
+      subject: 'subject',
+      text: 'Testing',
+    };
+  //@ts-ignore
+    transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        console.log(error);
+        res.status(500).send('Error: Could not send email');
+      } else {
+        console.log('Email sent: ' + info.response);
+        res.status(200).send('Email sent successfully');
+      }
+    });
 }

@@ -9,4 +9,6 @@ routes.post('/',UserController.userRegister)
 
 routes.post('/verify',UserController.userVreify)
 
+routes.post('/send-email',UserController.userEmail)
+
 export default routes;
